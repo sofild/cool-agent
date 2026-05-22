@@ -8,3 +8,20 @@ websockets>=13.0
 python-dotenv>=1.0.0
 pytest>=8.0.0
 pytest-asyncio>=0.24.0
+
+# === OpenTelemetry ===
+opentelemetry-api>=1.25.0
+opentelemetry-sdk>=1.25.0
+opentelemetry-exporter-otlp>=1.25.0
+opentelemetry-instrumentation>=0.46b0
+opentelemetry-instrumentation-httpx>=0.46b0
+opentelemetry-instrumentation-fastapi>=0.46b0
+opentelemetry-distro>=0.46b0
+
+# === OpenSandbox ===
+opensandbox>=1.0.0
+opensandbox-code-interpreter>=1.0.0
+
+# === Browser Automation ===
+browser-use>=0.10.0
+playwright>=1.40.0

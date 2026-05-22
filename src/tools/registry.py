@@ -40,13 +40,18 @@ class ToolRegistry:
         )
 
     def get_definitions(self) -> List[Dict[str, Any]]:
-        """获取所有工具定义（用于LLM）"""
+        """获取所有工具定义（用于LLM）
+
+        返回 OpenAI API 格式的工具定义
+        """
         return [
             {
-                "type": "custom",
-                "name": tool.name,
-                "description": tool.description,
-                "input_schema": tool.input_schema,
+                "type": "function",
+                "function": {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "parameters": tool.input_schema,
+                }
             }
             for tool in self._tools.values()
         ]

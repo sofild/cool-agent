@@ -33,8 +33,8 @@ class LLMClient(ABC):
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.model = config.get("model")
-        self.max_tokens = config.get("max_tokens", 4096)
-        self.temperature = config.get("temperature", 0.7)
+        self.max_tokens = int(config.get("max_tokens", 4096))
+        self.temperature = float(config.get("temperature", 0.7))
 
     @abstractmethod
     async def chat(

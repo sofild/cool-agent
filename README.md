@@ -1,128 +1,163 @@
 # Cool-Agent
 
-一个通用智能Agent系统，支持CLI和Web双模式运行，开箱即用，配置方便，功能强大且易于扩展。
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-## 功能特性
+A production-grade, general-purpose AI Agent system supporting both CLI and Web modes. Built with modularity, security, and extensibility in mind.
 
-- **多供应商LLM支持**：支持Anthropic、OpenAI、Azure、本地模型（Ollama/vLLM）等，通过配置即可切换
-- **模块化工具系统**：可动态注册和扩展工具，内置文件操作、网络请求、命令执行等核心工具
-- **权限控制**：细粒度的权限模型（allow/deny/ask）+ Hook系统 + 沙箱隔离
-- **上下文管理**：四级压缩管道（Snip → Microcompact → Context-Collapse → Autocompact），高效利用上下文窗口
-- **记忆系统**：短期记忆 + 长期记忆持久化，支持自动整合
-- **会话管理**：不可变的会话日志，支持回放和恢复
-- **双模式运行**：CLI交互式命令行 + Web API服务（REST + WebSocket）
+English | [中文](README_CN.md)
 
-## 快速开始
+## Overview
 
-### 安装依赖
+Cool-Agent is a universal intelligent Agent system that supports CLI interactive mode and Web API service mode out of the box. It features easy configuration, powerful capabilities, and high extensibility.
+
+This project was developed using the open-source skill: [agent-harness-engineer](https://github.com/sofild/agent-harness-engineer) — a production-grade Agent system development framework.
+
+## Features
+
+- **Multi-provider LLM Support** — Seamlessly switch between Anthropic, OpenAI, Azure, and local models (Ollama/vLLM) via configuration
+- **Modular Tool System** — Dynamically register and extend tools; built-in file operations, network requests, command execution, browser automation, and code interpretation
+- **Permission Control** — Fine-grained permission model (allow/deny/ask) + Hook system + sandbox isolation for defense in depth
+- **Context Management** — Four-level compression pipeline (Snip → Microcompact → Context-Collapse → Autocompact) for efficient context window utilization
+- **Memory System** — Short-term memory + long-term memory persistence with automatic consolidation
+- **Session Management** — Immutable session logs with replay and recovery support
+- **Dual-mode Operation** — CLI interactive command line + Web API service (REST + WebSocket)
+- **Observability** — Built-in OpenTelemetry tracing, metrics, and structured logging
+- **Browser Automation** — Integrated browser-use for web-based tasks
+- **Sandboxed Execution** — Secure code execution via OpenSandbox
+
+## Quick Start
+
+### Prerequisites
+
+- Python >= 3.10
+- pip
+
+### Installation
 
 ```bash
-# 克隆项目后进入目录
+# Clone the repository
+git clone https://github.com/yourusername/cool-agent.git
 cd cool-agent
 
-# 安装依赖
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 配置环境变量
+### Configuration
 
 ```bash
-# 复制环境变量模板
+# Copy environment template
 cp .env.example .env
 
-# 编辑 .env 文件，填入你的API密钥
-# 例如使用 Anthropic:
+# Edit .env with your API keys
+# Example using Anthropic:
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
 LLM_PROVIDER=anthropic
 LLM_MODEL=claude-sonnet-4-20250514
 
-# 或使用 OpenAI:
+# Or using OpenAI:
 # OPENAI_API_KEY=your_openai_api_key_here
 # LLM_PROVIDER=openai
 # LLM_MODEL=gpt-4o
 ```
 
-### 启动Agent
+### Running the Agent
 
-**CLI交互模式**（默认）：
+**CLI Interactive Mode** (default):
 ```bash
 python -m src.main cli
 ```
 
-**CLI单次执行**：
+**CLI Single Execution**:
 ```bash
-python -m src.main cli "你好，请介绍自己"
+python -m src.main cli "Hello, introduce yourself"
 ```
 
-**Web服务器模式**：
+**Web Server Mode**:
 ```bash
 python -m src.main web --port 8000
 ```
 
-## 目录结构
+## Project Structure
 
 ```
 cool-agent/
-├── README.md              # 项目说明和启动指南
-├── requirements.txt       # Python依赖
-├── .env.example           # 环境变量模板
-├── config/               # 用户配置目录（完全可修改）
-│   ├── settings.yaml      # 主配置文件
-│   └── agents/           # Agent角色定义
-├── src/                  # 核心框架代码
-│   ├── main.py           # 统一入口（CLI/Web双模式）
-│   ├── cli.py            # CLI交互式入口
-│   ├── web/              # Web服务
+├── README.md              # Project documentation
+├── README_CN.md           # Chinese documentation
+├── requirements.txt       # Python dependencies
+├── .env.example           # Environment variable template
+├── config/               # User configuration (fully customizable)
+│   ├── settings.yaml      # Main configuration file
+│   └── agents/           # Agent role definitions
+├── src/                  # Core framework code
+│   ├── main.py           # Unified entry point (CLI/Web dual mode)
+│   ├── cli.py            # CLI interactive entry
+│   ├── web/              # Web service
 │   │   └── server.py     # FastAPI + WebSocket
-│   ├── agent/            # Agent核心模块
-│   │   ├── core.py       # Agent主循环
-│   │   ├── session.py    # 会话管理器
-│   │   ├── context.py    # 上下文管理器
-│   │   └── memory.py     # 记忆系统
-│   ├── llm/              # LLM客户端抽象
-│   │   ├── client.py     # 抽象基类
-│   │   ├── factory.py    # 工厂函数
-│   │   └── providers/    # 供应商实现
-│   ├── tools/            # 工具系统
-│   │   ├── registry.py   # 工具注册表
-│   │   ├── file_tools.py # 文件操作
-│   │   ├── network_tools.py # 网络请求
-│   │   └── bash_tools.py # 命令执行
-│   ├── permissions/      # 权限系统
-│   │   ├── models.py     # 权限模型
-│   │   ├── hooks.py      # Hook系统
-│   │   └── sandbox.py    # 沙箱管理
-│   └── utils/            # 工具函数
-│       ├── logging.py    # 日志系统
-│       └── errors.py     # 异常定义
-├── skills/               # 用户自定义Skill（运行时创建）
-├── memory/               # 记忆持久化存储（.gitignore）
-├── workspace/            # Agent工作区（.gitignore）
-└── tests/                # 测试用例
+│   ├── agent/            # Agent core modules
+│   │   ├── core.py       # Agent main loop
+│   │   ├── session.py    # Session manager
+│   │   ├── context.py    # Context manager
+│   │   ├── memory.py     # Memory system
+│   │   └── feedback_loop.py  # Self-awareness & feedback
+│   ├── llm/              # LLM client abstraction
+│   │   ├── client.py     # Abstract base class
+│   │   ├── factory.py    # Factory function
+│   │   └── providers/    # Provider implementations
+│   ├── tools/            # Tool system
+│   │   ├── registry.py   # Tool registry
+│   │   ├── file_tools.py # File operations
+│   │   ├── network_tools.py  # Network requests
+│   │   ├── bash_tools.py # Command execution
+│   │   ├── browser_tools.py  # Browser automation
+│   │   └── code_tools.py # Code interpretation
+│   ├── permissions/      # Permission system
+│   │   ├── models.py     # Permission models
+│   │   ├── hooks.py      # Hook system
+│   │   └── sandbox.py    # Sandbox management
+│   ├── observability/    # Observability
+│   │   ├── logging.py    # Structured logging
+│   │   ├── metrics.py    # Metrics collection
+│   │   └── tracing.py    # Distributed tracing
+│   └── utils/            # Utilities
+│       ├── logging.py    # Logging utilities
+│       └── errors.py     # Exception definitions
+├── skills/               # User-defined Skills (runtime created)
+├── memory/               # Memory persistence storage (.gitignore)
+├── workspace/            # Agent workspace (.gitignore)
+├── logs/                 # Log files (.gitignore)
+└── tests/                # Test suite
     ├── test_llm.py
     ├── test_tools.py
-    └── test_permissions.py
+    ├── test_permissions.py
+    └── test_config.py
 ```
 
-## 配置说明
+## Configuration Guide
 
-### LLM供应商配置
+### LLM Provider Configuration
 
-编辑 `.env` 文件或在 `config/settings.yaml` 中配置：
+Edit `.env` or configure in `config/settings.yaml`:
 
-| 供应商 | 环境变量 | 说明 |
-|--------|---------|------|
-| Anthropic | `ANTHROPIC_API_KEY` | Claude系列模型 |
-| OpenAI | `OPENAI_API_KEY` | GPT系列模型 |
-| Azure | `AZURE_OPENAI_KEY` + `AZURE_OPENAI_ENDPOINT` | Azure OpenAI |
-| Local | `LOCAL_MODEL_BASE_URL` | 本地模型（Ollama/vLLM） |
+| Provider | Environment Variable | Description |
+|----------|---------------------|-------------|
+| Anthropic | `ANTHROPIC_API_KEY` | Claude series models |
+| OpenAI | `OPENAI_API_KEY` | GPT series models |
+| Azure | `AZURE_OPENAI_KEY` + `AZURE_OPENAI_ENDPOINT` | Azure OpenAI Service |
+| Local | `LOCAL_MODEL_BASE_URL` | Local models (Ollama/vLLM) |
 
-### 主配置文件
+### Main Configuration File
 
-`config/settings.yaml` 包含以下配置项：
+`config/settings.yaml` includes:
 
 ```yaml
-# LLM配置
+# LLM configuration
 llm:
   provider: "anthropic"
   model: "claude-sonnet-4-20250514"
@@ -130,27 +165,27 @@ llm:
   max_tokens: 4096
   temperature: 0.7
 
-# Agent配置
+# Agent configuration
 agent:
   name: "cool-agent"
   max_turns: 50
   context_window: 200000
 
-# 工具配置
+# Tool configuration
 tools:
   enabled:
     - "file_tools"
     - "network_tools"
     - "bash_tools"
 
-# 权限配置
+# Permission configuration
 permissions:
   mode: "ask"  # allow | deny | ask
   rules:
     - pattern: "Bash(rm -rf *)"
       action: "deny"
 
-# 沙箱配置
+# Sandbox configuration
 sandbox:
   enabled: true
   allowed_directories:
@@ -163,96 +198,159 @@ sandbox:
 
 ## Web API
 
-启动Web服务器后，可通过以下端点与Agent交互：
+After starting the web server, interact with the Agent via:
 
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/chat` | 发送消息获取响应 |
-| POST | `/reset` | 重置会话 |
-| GET | `/health` | 健康检查 |
-| GET | `/tools` | 列出可用工具 |
-| WS | `/ws` | WebSocket实时通信 |
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/chat` | Send message and get response |
+| POST | `/reset` | Reset session |
+| GET | `/health` | Health check |
+| GET | `/tools` | List available tools |
+| WS | `/ws` | WebSocket real-time communication |
 
-### 示例请求
+### Example Requests
 
 ```bash
-# 发送聊天消息
+# Send chat message
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "你好"}'
+  -d '{"message": "Hello"}'
 
-# 列出可用工具
+# List available tools
 curl http://localhost:8000/tools
 
-# 健康检查
+# Health check
 curl http://localhost:8000/health
 ```
 
-## 添加自定义工具
+## Adding Custom Tools
 
-在 `src/tools/` 目录下创建新的工具模块，然后在 `AgentCore._register_default_tools()` 中注册：
+Create a new tool module in `src/tools/`, then register it in `AgentCore._register_default_tools()`:
 
 ```python
 from .my_tools import MyTools
 
-# 在 _register_default_tools 方法中添加
+# Add in _register_default_tools method
 my_tools = MyTools()
 self.tools.register(
     "my_tool",
-    "工具描述",
+    "Tool description",
     my_tools.my_tool_schema,
     my_tools.my_tool_handler,
     is_concurrency_safe=True
 )
 ```
 
-## 添加自定义Skill
+## Adding Custom Skills
 
-1. 在 `skills/` 目录下创建新的skill文件（如 `my-skill.md`）
-2. 定义触发条件和行为说明
-3. 在 `config/agents/default.md` 中引用该skill
+1. Create a new skill file in `skills/` (e.g., `my-skill.md`)
+2. Define trigger conditions and behavior instructions
+3. Reference the skill in `config/agents/default.md`
 
-## 运行测试
+## Running Tests
 
 ```bash
-# 运行所有测试
+# Run all tests
 python -m pytest tests/ -v
 
-# 运行特定测试文件
+# Run specific test file
 python -m pytest tests/test_tools.py -v
+
+# Run with coverage
+python -m pytest tests/ --cov=src --cov-report=html
 ```
 
-## 常见问题
+## Architecture
 
-### Q: 如何切换LLM供应商？
+Cool-Agent follows the **Harness Engineering** design philosophy with three pillars:
 
-A: 修改 `.env` 文件中的 `LLM_PROVIDER` 变量，支持 `anthropic`、`openai`、`azure`、`local`，然后重启Agent。
+- **Context Engineering** — Manage information accessibility, structure, and timing
+- **Architectural Constraints** — Establish boundaries through mechanical enforcement
+- **Entropy Management** — Regularly clean up code degradation
 
-### Q: 如何添加新的工具？
+### Three-Component Virtualized Architecture
 
-A: 在 `src/tools/` 目录下创建新的工具模块，实现工具Schema和处理函数，然后在 `AgentCore._register_default_tools()` 中注册到工具注册表。
+```
+Session (Append-only Event Log)
+  └── Immutable, serializable, replayable
+  └── The single source of truth
 
-### Q: 记忆数据存储在哪里？
+Harness (Stateless Orchestration Loop)
+  └── All input from Session log
+  └── Crash-safe, restartable, migratable
 
-A: 记忆数据存储在 `memory/` 目录下，该目录已添加到 `.gitignore`，不会提交到版本控制。
+Sandbox (Isolated Execution Environment)
+  └── Filesystem / network / process isolation
+  └── Contain blast radius
+```
 
-### Q: WebSocket如何使用？
+### Core Components
 
-A: 连接 `ws://localhost:8000/ws`，发送文本消息，Agent会以流式方式返回中间事件和最终结果。
+- **LLM Abstraction Layer** — Abstract base class + factory pattern for vendor-agnostic LLM calls
+- **Agent Core Loop** — while-true + 7 Continue sites for error recovery and state management
+- **Tool System** — Registry pattern with Schema validation and concurrency safety markers
+- **Permission Security** — Six-layer defense in depth (permission model → Hook system → sandbox → audit)
+- **Context Management** — Four-level compression pipeline for progressive context space release
 
-## 技术架构
+## Tech Stack
 
-- **LLM抽象层**：基于抽象基类 + 工厂模式，实现供应商无关的LLM调用
-- **Agent核心循环**：while-true + 7个Continue站点，实现错误恢复和状态管理
-- **工具系统**：注册表模式，支持Schema验证和并发安全标记
-- **权限安全**：六层纵深防御（权限模型 → Hook系统 → 沙箱 → 审计）
-- **上下文管理**：四级压缩管道，渐进式释放上下文空间
+| Component | Technology |
+|-----------|------------|
+| Web Framework | FastAPI |
+| HTTP Client | httpx |
+| Configuration | PyYAML, python-dotenv |
+| Data Validation | Pydantic |
+| Async Runtime | asyncio |
+| LLM SDKs | anthropic, openai |
+| WSGI Server | uvicorn |
+| Observability | OpenTelemetry |
+| Browser Automation | browser-use, playwright |
+| Sandbox | OpenSandbox |
 
-## 依赖要求
+## Development
 
-- Python >= 3.10
-- 主要依赖：`anthropic`, `openai`, `httpx`, `fastapi`, `uvicorn`, `pyyaml`, `python-dotenv`
+This project was developed using the open-source skill **[agent-harness-engineer](https://github.com/sofild/agent-harness-engineer)** — a framework for building production-grade Agent systems with:
+
+- Phased construction methodology (7 phases from initialization to production)
+- Harness Engineering principles
+- Multi-agent collaboration patterns
+- MCP protocol integration
+- Security sandbox design
+
+## FAQ
+
+**Q: How to switch LLM providers?**
+
+A: Modify the `LLM_PROVIDER` variable in `.env` file. Supports `anthropic`, `openai`, `azure`, `local`. Restart the Agent after changing.
+
+**Q: How to add new tools?**
+
+A: Create a new tool module in `src/tools/`, implement the tool schema and handler function, then register it in the tool registry via `AgentCore._register_default_tools()`.
+
+**Q: Where is memory data stored?**
+
+A: Memory data is stored in the `memory/` directory, which is added to `.gitignore` and will not be committed to version control.
+
+**Q: How to use WebSocket?**
+
+A: Connect to `ws://localhost:8000/ws`, send text messages, and the Agent will return intermediate events and final results in streaming mode.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [agent-harness-engineer](https://github.com/sofild/agent-harness-engineer) skill framework
+- Inspired by Anthropic's Managed Agents architecture
+- Claude Code design patterns

@@ -65,6 +65,43 @@ logging:
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   file: "logs/agent.log"
 
+# 可观测性配置
+observability:
+  enabled: true
+  service_name: "cool-agent"
+  traces:
+    enabled: true
+    exporter: "otlp"  # otlp | console | jaeger
+    endpoint: "http://localhost:4317"
+  metrics:
+    enabled: true
+    exporter: "otlp"
+    endpoint: "http://localhost:4317"
+    export_interval: 60000
+  logs:
+    enabled: true
+    format: "json"  # json | text
+    level: "info"
+
+# 沙箱执行配置（OpenSandbox）
+sandbox_execution:
+  enabled: true
+  provider: "opensandbox"  # opensandbox | local
+  image: "opensandbox/code-interpreter:v1.0.2"
+  max_pool_size: 3
+  timeout: 600
+  network:
+    enabled: true
+    egress_policy: "allow"  # allow | deny | restricted
+
+# 浏览器自动化配置
+browser:
+  enabled: true
+  headless: true
+  default_timeout: 30
+  max_steps: 15
+  screenshot_on_error: true
+
 # Web服务配置
 web:
   enabled: true

@@ -1,9 +1,11 @@
-import subprocess
+import asyncio
 from typing import Dict, Any
+
+from ..sandbox.executor import SandboxExecutor
 
 
 class BashTools:
-    """命令执行工具"""
+    """命令执行工具（支持沙箱隔离）"""
 
     bash_schema = {
         "type": "object",
@@ -14,26 +16,31 @@ class BashTools:
         "required": ["command"]
     }
 
+    def __init__(self, sandbox_config: Dict[str, Any] = None):
+        self.sandbox_config = sandbox_config or {}
+        self._executor: SandboxExecutor = None
+
+    def _get_executor(self) -> SandboxExecutor:
+        """延迟初始化执行器"""
+        if self._executor is None:
+            self._executor = SandboxExecutor(self.sandbox_config)
+        return self._executor
+
     def bash(self, input_data: Dict[str, Any]) -> str:
-        """执行命令"""
+        """执行命令（同步接口）"""
         command = input_data["command"]
         timeout = input_data.get("timeout", 30)
 
+        executor = self._get_executor()
         try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            )
-            output = result.stdout
-            if result.stderr:
-                output += f"\n[stderr]\n{result.stderr}"
-            if result.returncode != 0:
-                output += f"\n[exit code: {result.returncode}]"
-            return output
-        except subprocess.TimeoutExpired:
-            return f"Error: Command timed out after {timeout} seconds"
+            return asyncio.run(executor.execute_command(command, timeout))
         except Exception as e:
             return f"Error: {str(e)}"
+
+    async def bash_async(self, input_data: Dict[str, Any]) -> str:
+        """异步执行命令"""
+        command = input_data["command"]
+        timeout = input_data.get("timeout", 30)
+
+        executor = self._get_executor()
+        return await executor.execute_command(command, timeout)

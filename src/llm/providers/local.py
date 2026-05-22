@@ -11,7 +11,8 @@ class LocalClient(LLMClient):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.base_url = config.get("base_url", "http://localhost:11434")
-        self.client = httpx.AsyncClient()
+        timeout = config.get("timeout", 120)
+        self.client = httpx.AsyncClient(timeout=timeout)
 
     async def chat(
         self,
@@ -30,20 +31,30 @@ class LocalClient(LLMClient):
             "temperature": self.temperature,
         }
 
-        response = await self.client.post(
-            f"{self.base_url}/v1/chat/completions",
-            json=payload
-        )
-        response.raise_for_status()
-        data = response.json()
+        try:
+            response = await self.client.post(
+                f"{self.base_url}/v1/chat/completions",
+                json=payload
+            )
+            response.raise_for_status()
+            data = response.json()
 
-        message = data["choices"][0]["message"]
-        return LLMResponse(
-            content=message.get("content", ""),
-            tool_calls=[],
-            usage=data.get("usage", {}),
-            model=self.model
-        )
+            message = data["choices"][0]["message"]
+            return LLMResponse(
+                content=message.get("content", ""),
+                tool_calls=[],
+                usage=data.get("usage", {}),
+                model=self.model
+            )
+        except httpx.HTTPStatusError as e:
+            error_body = e.response.text if hasattr(e, 'response') else 'unknown'
+            raise Exception(f"HTTP {e.response.status_code}: {error_body}")
+        except httpx.RequestError as e:
+            raise Exception(f"Request failed: {str(e)}")
+        except (KeyError, IndexError) as e:
+            raise Exception(f"Invalid response format: {str(e)}")
+        except Exception as e:
+            raise Exception(f"LocalClient error: {str(e)}")
 
     def validate_config(self) -> bool:
         """验证配置"""

@@ -9,6 +9,16 @@ from pydantic import BaseModel
 
 from ..agent.core import AgentCore
 from ..utils.logging import setup_logging, get_logger
+from ..llm.config_loader import load_llm_config_from_env, llm_config_to_dict
+from ..observability import setup_observability, get_observability
+
+
+try:
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+    _otel_instrumentation_available = True
+except ImportError:
+    _otel_instrumentation_available = False
 
 
 logger = get_logger(__name__)
@@ -27,16 +37,23 @@ def load_config() -> Dict[str, Any]:
     with open("config/settings.yaml", "r", encoding='utf-8') as f:
         config = yaml.safe_load(f)
 
-    # 从环境变量覆盖
-    llm_config = config.get("llm", {})
-    if os.getenv("ANTHROPIC_API_KEY"):
+    # 使用新的统一配置格式
+    llm_config_set = load_llm_config_from_env()
+    llm_config = llm_config_to_dict(llm_config_set.primary)
+
+    # 兼容旧格式环境变量
+    if os.getenv("ANTHROPIC_API_KEY") and not llm_config.get("api_key"):
         llm_config["api_key"] = os.getenv("ANTHROPIC_API_KEY")
-    if os.getenv("OPENAI_API_KEY"):
+    if os.getenv("OPENAI_API_KEY") and not llm_config.get("api_key"):
         llm_config["api_key"] = os.getenv("OPENAI_API_KEY")
-    if os.getenv("LLM_PROVIDER"):
-        llm_config["provider"] = os.getenv("LLM_PROVIDER")
-    if os.getenv("LLM_MODEL"):
-        llm_config["model"] = os.getenv("LLM_MODEL")
+    if os.getenv("LOCAL_MODEL_BASE_URL") and not llm_config.get("base_url"):
+        llm_config["base_url"] = os.getenv("LOCAL_MODEL_BASE_URL")
+
+    config["llm"] = llm_config
+
+    # 保存备用模型配置
+    if llm_config_set.backups:
+        config["llm_backups"] = [llm_config_to_dict(b) for b in llm_config_set.backups]
 
     return config
 
@@ -48,6 +65,17 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Cool-Agent Web Server...")
 
     config = load_config()
+
+    # 初始化可观测性
+    observability_config = config.get("observability", {"enabled": True})
+    setup_observability(observability_config)
+    logger.info("Observability initialized")
+
+    # 自动 instrument httpx
+    if _otel_instrumentation_available:
+        HTTPXClientInstrumentor().instrument()
+        logger.info("HTTPX instrumented")
+
     global agent_instance
     agent_instance = AgentCore(
         llm_config=config.get("llm", {}),
@@ -59,6 +87,9 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info("Shutting down...")
+    obs = get_observability()
+    if obs:
+        obs.shutdown()
 
 
 app = FastAPI(
@@ -67,6 +98,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+# 自动 instrument FastAPI
+if _otel_instrumentation_available:
+    FastAPIInstrumentor.instrument_app(app)
 
 # CORS
 app.add_middleware(
